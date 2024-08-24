@@ -1,0 +1,25 @@
+{
+  "main": "main.js",
+  "name": "node-pviewer",
+  "version": "1.0.0",
+  "description": "PViewer for NodeJS.",
+  "bin": {
+    "pviewer": "app.js"
+  },
+  "author": "Takuma Hirayama <hirayama.takuma@picam360.com>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/picam360/node-pviewer.git"
+  },
+  "dependencies": {
+    "electron": "11.1.1",
+    "electron-devtools-installer": "^3.2.0",
+    "node-pstcore": "1.0.0",
+    "rimraf": "*"
+  },
+  "scripts": {
+    "install": "node setup.js",
+    "start": "node app.js"
+  }
+}
