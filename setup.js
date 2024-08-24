@@ -2,13 +2,26 @@
 process.chdir(__dirname);
 
 const fs = require("fs");
-const rimraf = require("rimraf");
+const path = require('path');
 const { execSync } = require('child_process');
 
+function deleteFolderRecursiveSync(folderPath) {
+    if (fs.existsSync(folderPath)) {
+        fs.readdirSync(folderPath).forEach((file) => {
+            const fullPath = path.join(folderPath, file);
+            if (fs.lstatSync(fullPath).isDirectory()) {
+                deleteFolderRecursiveSync(fullPath);
+            } else {
+                fs.unlinkSync(fullPath);
+            }
+        });
+        fs.rmdirSync(folderPath);
+        console.log(`${folderPath} deleted successfully`);
+    }
+}
+
 try{
-	if (fs.existsSync('www')) {
-		rimraf.sync('www');
-	}
+	deleteFolderRecursiveSync('www');
 }catch(err){
 	console.log("error on rm www:" + err);
 }
@@ -21,7 +34,7 @@ try{
 }
 
 try{
-	fs.copyFileSync('www/config.json.tmp', 'www/config.json');
+	fs.copyFileSync('www/config.js.tmp', 'www/config.js');
 }catch(err){
 	console.log("error on copy config.json : " + err);
 }
