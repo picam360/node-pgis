@@ -43,6 +43,7 @@ const createWindow = () => {
     win.loadFile('www/index.html');
 
     if(app_config.offscreen){
+        win.setSize(512, 512);
         win.webContents.on('did-finish-load', () => {
             let m_redis_client = null;
     
@@ -60,32 +61,15 @@ const createWindow = () => {
             
                 setInterval(() => {
                     win.webContents.capturePage().then(image => {
-                        const pixels = image.toBitmap(); // RGBA形式のバッファを取得
-                        const channels = 4;
-                        const width = image.getSize().width;
-                        const height = image.getSize().height;
-                        client.publish('pgis-offscreen-pixels', pixels, (err, reply) => {
-                            if (err) {
-                                console.error('Error publishing message:', err);
-                            } else {
-                                //console.log(`Message published to ${reply} subscribers.`);
-                            }
+                        const image2 = image.resize({
+                            width: 512,
+                            height: 512,
                         });
-                        client.publish('pgis-offscreen-channels', channels.toString(), (err, reply) => {
-                            if (err) {
-                                console.error('Error publishing message:', err);
-                            } else {
-                                //console.log(`Message published to ${reply} subscribers.`);
-                            }
-                        });
-                        client.publish('pgis-offscreen-width', width.toString(), (err, reply) => {
-                            if (err) {
-                                console.error('Error publishing message:', err);
-                            } else {
-                                //console.log(`Message published to ${reply} subscribers.`);
-                            }
-                        });
-                        client.publish('pgis-offscreen-height', height.toString(), (err, reply) => {
+                        // const png = image2.toPNG();
+                        // const base64String = png.toString('base64');
+                        // const dataURL = `data:image/png;base64,${base64String}`;
+                        const dataURL = image2.toDataURL();
+                        client.publish('pgis-offscreen', dataURL, (err, reply) => {
                             if (err) {
                                 console.error('Error publishing message:', err);
                             } else {
