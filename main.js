@@ -5,8 +5,9 @@ const { spawn } = require('child_process');
 const redis = require('redis');
 
 const app_config = {
-    offscreen : true,
-    tileserver_enabled : true,
+    offscreen : false,
+    tileserver_enabled : false,
+    debug : false,
 };
 
 const createWindow = () => {
@@ -26,7 +27,7 @@ const createWindow = () => {
         icon: appIcon,
         show: !app_config.offscreen,
         webPreferences: {
-            //devTools: true,
+            devTools: app_config.debug,
             offscreen: app_config.offscreen,
             nodeIntegration: false,
             contextIsolation: false,
@@ -40,7 +41,9 @@ const createWindow = () => {
         frame: false,
     });
 
-    //win.webContents.openDevTools();
+    if(app_config.debug){
+        win.webContents.openDevTools();
+    }
 
     win.loadFile('www/index.html');
 
@@ -83,34 +86,35 @@ const createWindow = () => {
             });
         });
     }
-    if(app_config.tileserver_enabled){
-        const options = {
-            port: 9101,
-            mbtiles: path.join(__dirname, 'data/japan-latest.mbtiles'), 
-        };
-
-        //npm install -g tileserver-gl-light
-        const tileserver = spawn(
-            'tileserver-gl-light',
-            ['--mbtiles', options.mbtiles, '-p', '9101']
-        );
-      
-        tileserver.stdout.on('data', (data) => {
-          console.log(`stdout: ${data}`);
-        });
-      
-        tileserver.stderr.on('data', (data) => {
-          console.error(`stderr: ${data}`);
-        });
-      
-        tileserver.on('close', (code) => {
-          console.log(`child process exited with code ${code}`);
-        });
-    }
 };
 
 app.commandLine.appendSwitch('enable-transparent-visuals');
 app.commandLine.appendSwitch('disable-gpu');
+
+if(app_config.tileserver_enabled){
+    const options = {
+        port: 9101,
+        mbtiles: path.join(__dirname, 'data/japan-latest.mbtiles'), 
+    };
+
+    //npm install -g tileserver-gl-light
+    const tileserver = spawn(
+        'tileserver-gl-light',
+        ['--mbtiles', options.mbtiles, '-p', '9101']
+    );
+  
+    tileserver.stdout.on('data', (data) => {
+      console.log(`stdout: ${data}`);
+    });
+  
+    tileserver.stderr.on('data', (data) => {
+      console.error(`stderr: ${data}`);
+    });
+  
+    tileserver.on('close', (code) => {
+      console.log(`child process exited with code ${code}`);
+    });
+}
 
 app.whenReady().then(() => {
     setTimeout(() => {
