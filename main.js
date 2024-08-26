@@ -1,10 +1,12 @@
 const { app, BrowserWindow } = require('electron');
 const path = require('path');
 const fs = require('fs');
+const { spawn } = require('child_process');
 const redis = require('redis');
 
 const app_config = {
     offscreen : true,
+    tileserver_enabled : true,
 };
 
 const createWindow = () => {
@@ -79,6 +81,30 @@ const createWindow = () => {
                     });
                 }, 1000);
             });
+        });
+    }
+    if(app_config.tileserver_enabled){
+        const options = {
+            port: 9101,
+            mbtiles: path.join(__dirname, 'data/japan-latest.mbtiles'), 
+        };
+
+        //npm install -g tileserver-gl-light
+        const tileserver = spawn(
+            'tileserver-gl-light',
+            ['--mbtiles', options.mbtiles, '-p', '9101']
+        );
+      
+        tileserver.stdout.on('data', (data) => {
+          console.log(`stdout: ${data}`);
+        });
+      
+        tileserver.stderr.on('data', (data) => {
+          console.error(`stderr: ${data}`);
+        });
+      
+        tileserver.on('close', (code) => {
+          console.log(`child process exited with code ${code}`);
         });
     }
 };

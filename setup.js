@@ -38,3 +38,9 @@ try{
 }catch(err){
 	console.log("error on copy config.json : " + err);
 }
+
+try{
+	execSync('npm install -g tileserver-gl-light', {cwd : __dirname});
+}catch(err){
+	console.log("error on npm:" + err);
+}

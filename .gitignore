@@ -43,6 +43,7 @@ cmake_install.cmake
 *-debug.cmake
 
 www
+data
 node_modules
 dist
 *-lock.json
