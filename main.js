@@ -4,11 +4,36 @@ const fs = require('fs');
 const { spawn } = require('child_process');
 const redis = require('redis');
 
-const app_config = {
+function parseArgs() {
+    const args = process.argv.slice(2);
+    const options = {};
+
+    args.forEach(arg => {
+        const [key, value] = arg.split('=');
+        if (key.startsWith('--')) {
+        options[key.replace('--', '')] = value;
+        }
+    });
+
+    return options;
+}
+const m_args_options = parseArgs();
+
+const m_app_config = {
     offscreen : false,
     tileserver_enabled : false,
     debug : false,
 };
+
+if(m_args_options.offscreen){
+    m_app_config.offscreen = true;
+}
+if(m_args_options.tileserver_enabled){
+    m_app_config.tileserver_enabled = true;
+}
+if(m_args_options.debug_enabled){
+    m_app_config.debug = true;
+}
 
 const createWindow = () => {
     let appIcon;
@@ -25,10 +50,10 @@ const createWindow = () => {
         width: 800,
         height: 600,
         icon: appIcon,
-        show: !app_config.offscreen,
+        show: !m_app_config.offscreen,
         webPreferences: {
-            devTools: app_config.debug,
-            offscreen: app_config.offscreen,
+            devTools: m_app_config.debug,
+            offscreen: m_app_config.offscreen,
             nodeIntegration: false,
             contextIsolation: false,
             enableRemoteModule: true,
@@ -41,13 +66,13 @@ const createWindow = () => {
         frame: false,
     });
 
-    if(app_config.debug){
+    if(m_app_config.debug){
         win.webContents.openDevTools();
     }
 
     win.loadFile('www/index.html');
 
-    if(app_config.offscreen){
+    if(m_app_config.offscreen){
         win.setSize(512, 512);
         win.webContents.on('did-finish-load', () => {
             let m_redis_client = null;
@@ -91,7 +116,7 @@ const createWindow = () => {
 app.commandLine.appendSwitch('enable-transparent-visuals');
 app.commandLine.appendSwitch('disable-gpu');
 
-if(app_config.tileserver_enabled){
+if(m_app_config.tileserver_enabled){
     const options = {
         port: 9101,
         mbtiles: path.join(__dirname, 'data/japan-latest.mbtiles'), 
