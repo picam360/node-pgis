@@ -3,7 +3,10 @@ const path = require('path');
 
 (async () => {
   // Puppeteerを起動
-  const browser = await puppeteer.launch();
+  const browser = await puppeteer.launch({
+    executablePath: '/usr/bin/chromium-browser' // ここにChromiumのパスを指定
+  });
+
   const page = await browser.newPage();
 
   // ローカルのindex.htmlファイルを読み込む
