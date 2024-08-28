@@ -29,7 +29,7 @@ const m_args_options = parseArgs();
 const m_app_config = Object.assign({
     offscreen : false,
     debug : false,
-}, require('config.js'));
+}, require('./config.js'));
 
 if(m_args_options.debug_enabled){
     m_app_config.debug = true;
@@ -37,14 +37,14 @@ if(m_args_options.debug_enabled){
 
 function start_tileserver() { // start up tile server
     const options = {
-        port: 9101,
+        port: 9111,
         mbtiles: path.join(__dirname, 'data/japan-latest.mbtiles'), 
     };
 
     //npm install -g tileserver-gl-light
     const tileserver = spawn(
         'tileserver-gl-light',
-        ['--mbtiles', options.mbtiles, '-p', '9101']
+        ['--mbtiles', options.mbtiles, '-p', options.port]
     );
   
     tileserver.stdout.on('data', (data) => {
@@ -61,6 +61,8 @@ function start_tileserver() { // start up tile server
 }
 
 function start_webserver() { // start up websocket server
+    const options = {
+    };
     console.log("websocket server starting up");
     express_app = express();
 	express_app.use(cors());
@@ -149,7 +151,7 @@ if(m_app_config.offscreen){
         const dataUrl = `data:image/png;base64,${screenshot}`;
     
         if(m_redis_client){
-            client.publish('pgis-offscreen', dataUrl, (err, reply) => {
+            m_redis_client.publish('pgis-offscreen', dataUrl, (err, reply) => {
                 if (err) {
                     console.error('Error publishing message:', err);
                 } else {
