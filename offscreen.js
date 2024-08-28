@@ -16,7 +16,9 @@ const path = require('path');
   await page.goto(fileUrl);
 
   // スクリーンキャプチャを取得して保存
-  await page.screenshot({ path: 'screenshot.png' });
+  //setInterval(() => {
+    await page.screenshot({ path: 'screenshot.png' });
+  //})
 
   // Puppeteerを終了
   await browser.close();
