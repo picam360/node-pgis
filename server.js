@@ -122,6 +122,7 @@ start_tileserver();
 start_webserver();
 
 if(m_app_config.offscreen){
+    //if chromium version is 112 then install puppeteer@20.0.0
     const puppeteer = require('puppeteer');
     (async () => {
       const browser = await puppeteer.launch({
