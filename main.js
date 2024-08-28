@@ -19,17 +19,13 @@ function parseArgs() {
 }
 const m_args_options = parseArgs();
 
-const m_app_config = {
+const m_app_config = Object.assign({
     offscreen : false,
-    tileserver_enabled : false,
     debug : false,
-};
+}, require('config.js'));
 
 if(m_args_options.offscreen){
     m_app_config.offscreen = true;
-}
-if(m_args_options.tileserver_enabled){
-    m_app_config.tileserver_enabled = true;
 }
 if(m_args_options.debug_enabled){
     m_app_config.debug = true;
@@ -115,31 +111,6 @@ const createWindow = () => {
 
 app.commandLine.appendSwitch('enable-transparent-visuals');
 app.commandLine.appendSwitch('disable-gpu');
-
-if(m_app_config.tileserver_enabled){
-    const options = {
-        port: 9101,
-        mbtiles: path.join(__dirname, 'data/japan-latest.mbtiles'), 
-    };
-
-    //npm install -g tileserver-gl-light
-    const tileserver = spawn(
-        'tileserver-gl-light',
-        ['--mbtiles', options.mbtiles, '-p', '9101']
-    );
-  
-    tileserver.stdout.on('data', (data) => {
-      console.log(`stdout: ${data}`);
-    });
-  
-    tileserver.stderr.on('data', (data) => {
-      console.error(`stderr: ${data}`);
-    });
-  
-    tileserver.on('close', (code) => {
-      console.log(`child process exited with code ${code}`);
-    });
-}
 
 app.whenReady().then(() => {
     setTimeout(() => {

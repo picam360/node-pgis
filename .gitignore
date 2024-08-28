@@ -47,6 +47,7 @@ data
 node_modules
 dist
 *-lock.json
+config.js
 
 .DS_Store
 .snipet
