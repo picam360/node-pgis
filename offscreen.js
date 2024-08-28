@@ -4,6 +4,7 @@ const path = require('path');
 (async () => {
   // Puppeteerを起動
   const browser = await puppeteer.launch({
+    args: ['--no-sandbox', '--disable-setuid-sandbox'],
     executablePath: '/usr/bin/chromium-browser' // ここにChromiumのパスを指定
   });
 
