@@ -1,2 +1,5 @@
 module.exports = {
+    offscreen : false,
+    offscreen_headless : true,
+    offscreen_interval_ms : 1000,
 };

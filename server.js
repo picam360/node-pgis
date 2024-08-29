@@ -35,31 +35,6 @@ if(m_args_options.debug_enabled){
     m_app_config.debug = true;
 }
 
-function start_tileserver() { // start up tile server
-    const options = {
-        port: 9111,
-        mbtiles: path.join(__dirname, 'data/japan-latest.mbtiles'), 
-    };
-
-    //npm install -g tileserver-gl-light
-    const tileserver = spawn(
-        'tileserver-gl-light',
-        ['--mbtiles', options.mbtiles, '-p', options.port]
-    );
-  
-    tileserver.stdout.on('data', (data) => {
-      console.log(`stdout: ${data}`);
-    });
-  
-    tileserver.stderr.on('data', (data) => {
-      console.error(`stderr: ${data}`);
-    });
-  
-    tileserver.on('close', (code) => {
-      console.log(`child process exited with code ${code}`);
-    });
-}
-
 function start_webserver() { // start up websocket server
     const options = {
     };
@@ -120,7 +95,6 @@ function start_webserver() { // start up websocket server
     });
 }
 
-start_tileserver();
 start_webserver();
 
 if(m_app_config.offscreen){
@@ -128,7 +102,7 @@ if(m_app_config.offscreen){
     const puppeteer = require('puppeteer');
     (async () => {
       const browser = await puppeteer.launch({
-        headless: true,
+        headless: !(m_app_config.offscreen_headless === false),
         args: [
           '--disable-gpu',
           '--disable-dev-shm-usage',
@@ -160,7 +134,7 @@ if(m_app_config.offscreen){
             });
         }
 
-      }, 1000)
+      }, m_app_config.offscreen_interval_ms || 1000);
     
       // Puppeteerを終了
       //await browser.close();
