@@ -42,7 +42,7 @@ CMakeCache.txt
 cmake_install.cmake
 *-debug.cmake
 
-www
+pgis
 data
 node_modules
 dist

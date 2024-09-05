@@ -5,42 +5,23 @@ const fs = require("fs");
 const path = require('path');
 const { execSync } = require('child_process');
 
-function deleteFolderRecursiveSync(folderPath) {
-    if (fs.existsSync(folderPath)) {
-        fs.readdirSync(folderPath).forEach((file) => {
-            const fullPath = path.join(folderPath, file);
-            if (fs.lstatSync(fullPath).isDirectory()) {
-                deleteFolderRecursiveSync(fullPath);
-            } else {
-                fs.unlinkSync(fullPath);
-            }
-        });
-        fs.rmdirSync(folderPath);
-        console.log(`${folderPath} deleted successfully`);
-    }
-}
-
 try{
-	deleteFolderRecursiveSync('www');
+	if (fs.existsSync('pgis')) {
+		fs.rmSync('pgis', {recursive:true, force:true});
+	}
 }catch(err){
-	console.log("error on rm www:" + err);
+	console.log("error on rm pgis:" + err);
 }
 
 try{
-	//execSync('git clone --depth 1 https://github.com/picam360/pgis.git www -b v0.1', {cwd : __dirname});
-	execSync('git clone --depth 1 https://github.com/picam360/pgis.git www', {cwd : __dirname});
+	//execSync('git clone --depth 1 https://github.com/picam360/pgis.git -b v0.1', {cwd : __dirname});
+	execSync('git clone --depth 1 https://github.com/picam360/pgis.git', {cwd : __dirname});
 }catch(err){
 	console.log("error on git:" + err);
 }
 
 try{
-	fs.copyFileSync('www/config.js.tmp', 'www/config.js');
+	fs.copyFileSync('pgis/config.js.tmp', 'pgis/config.js');
 }catch(err){
 	console.log("error on copy config.json : " + err);
-}
-
-try{
-	execSync('npm install -g tileserver-gl-light', {cwd : __dirname});
-}catch(err){
-	console.log("error on npm:" + err);
 }
