@@ -62,7 +62,7 @@ function start_webserver() { // start up websocket server
 	};
 	https = require('https').Server(https_options, express_app);
 
-    express_app.use(express.static('www')); // this need be set
+    express_app.use(express.static('../pgis')); // this need be set
 	var http_port = 9101;
 	if(options['http_port']){
 		http_port = options['http_port'];
