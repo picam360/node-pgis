@@ -110,12 +110,17 @@ if(m_app_config.offscreen){
           '--no-first-run',
           '--no-sandbox',
           '--no-zygote',
-          '--single-process'
+          '--single-process',
         ],
         executablePath: '/usr/bin/chromium-browser'
       });
     
       const page = await browser.newPage();
+
+      page.setViewport({
+        width: 1280,
+        height: 640,
+      });
     
       const url = 'http://localhost:9101/index.html';
       await page.goto(url);
