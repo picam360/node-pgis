@@ -43,6 +43,7 @@ function start_webserver() { // start up websocket server
 	express_app.use(cors());
 	express_app.use(express.json());
     http = require('http').Server(express_app);
+	http.keepAliveTimeout = 60000;
 
 	var https_key_filepath = 'certs/https/localhost-key.pem';
 	var https_cert_filepath = 'certs/https/localhost.pem';
@@ -61,6 +62,7 @@ function start_webserver() { // start up websocket server
 		cert: fs.readFileSync(https_cert_filepath)
 	};
 	https = require('https').Server(https_options, express_app);
+	https.keepAliveTimeout = 60000;
 
     express_app.use(express.static('../pgis')); // this need be set
 	var http_port = 9101;
