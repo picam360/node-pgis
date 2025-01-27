@@ -21,6 +21,7 @@ const m_args_options = parseArgs();
 
 const m_app_config = Object.assign({
     offscreen : false,
+    offscreen_enabled : false,//on/off
     debug : false,
 }, require('config.js'));
 
@@ -86,24 +87,57 @@ const createWindow = () => {
                 m_redis_client = client;
             
                 setInterval(() => {
-                    win.webContents.capturePage().then(image => {
-                        const image2 = image.resize({
-                            width: 512,
-                            height: 512,
+                    if(m_app_config.offscreen_enabled){
+                        win.webContents.capturePage().then(image => {
+                            const image2 = image.resize({
+                                width: 512,
+                                height: 512,
+                            });
+                            // const png = image2.toPNG();
+                            // const base64String = png.toString('base64');
+                            // const dataURL = `data:image/png;base64,${base64String}`;
+                            const dataURL = image2.toDataURL();
+                            client.publish('pgis-offscreen', `{"enabled":true,"url":"${dataURL}"}`, (err, reply) => {
+                                if (err) {
+                                    console.error('Error publishing message:', err);
+                                } else {
+                                    //console.log(`Message published to ${reply} subscribers.`);
+                                }
+                            });
                         });
-                        // const png = image2.toPNG();
-                        // const base64String = png.toString('base64');
-                        // const dataURL = `data:image/png;base64,${base64String}`;
-                        const dataURL = image2.toDataURL();
-                        client.publish('pgis-offscreen', dataURL, (err, reply) => {
+                    }else{
+                        client.publish('pgis-offscreen', '{"enabled":false}', (err, reply) => {
                             if (err) {
                                 console.error('Error publishing message:', err);
                             } else {
                                 //console.log(`Message published to ${reply} subscribers.`);
                             }
                         });
-                    });
+                    }
                 }, 1000);
+            });
+
+            const subscriber = client.duplicate();
+            subscriber.connect().then(() => {
+                console.log('redis subscriber connected:');
+        
+                subscriber.subscribe('pgis-server', (data, key) => {
+                    const params = data.trim().split(' ');
+                    switch (params[0]) {
+                        case "CMD":
+                            switch (params[1]) {
+                                case "ENABLE_OFFSCREEN":
+                                    m_app_config.offscreen_enabled = true;
+                                    break;
+                                case "DISABLE_OFFSCREEN":
+                                    m_app_config.offscreen_enabled = false;
+                                    break;
+                            }
+
+                            console.log(`"${data}" subscribed.`);
+                            break;
+                    }
+                });
             });
         });
     }

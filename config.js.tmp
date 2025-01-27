@@ -1,0 +1,5 @@
+module.exports = {
+    offscreen : false,
+    offscreen_enabled : false,//on/off
+    debug : false,
+};
