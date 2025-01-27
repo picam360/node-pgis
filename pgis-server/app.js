@@ -165,13 +165,15 @@ if(m_app_config.offscreen){
                 });
             }
         }else{
-            client.publish('pgis-offscreen', '{"enabled":false}', (err, reply) => {
-                if (err) {
-                    console.error('Error publishing message:', err);
-                } else {
-                    //console.log(`Message published to ${reply} subscribers.`);
-                }
-            });
+            if(m_redis_client){
+                m_redis_client.publish('pgis-offscreen', '{"enabled":false}', (err, reply) => {
+                    if (err) {
+                        console.error('Error publishing message:', err);
+                    } else {
+                        //console.log(`Message published to ${reply} subscribers.`);
+                    }
+                });
+            }
         }
 
       }, m_app_config.offscreen_interval_ms || 1000);
