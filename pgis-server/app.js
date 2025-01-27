@@ -28,6 +28,7 @@ const m_args_options = parseArgs();
 
 const m_app_config = Object.assign({
     offscreen : false,
+    offscreen_enabled : false,//on/off
     debug : false,
 }, require('./config.js'));
 
@@ -95,6 +96,28 @@ function start_webserver() { // start up websocket server
         console.log('redis connected:');
         m_redis_client = client;
     });
+    const subscriber = client.duplicate();
+    subscriber.connect().then(() => {
+        console.log('redis subscriber connected:');
+
+        subscriber.subscribe('pgis-server', (data, key) => {
+            const params = data.trim().split(' ');
+            switch (params[0]) {
+                case "CMD":
+                    switch (params[1]) {
+                        case "ENABLE_OFFSCREEN":
+                            m_app_config.offscreen_enabled = true;
+                            break;
+                        case "DISABLE_OFFSCREEN":
+                            m_app_config.offscreen_enabled = false;
+                            break;
+                    }
+
+                    console.log(`"${data}" subscribed.`);
+                    break;
+            }
+        });
+    });
 }
 
 start_webserver();
@@ -128,11 +151,21 @@ if(m_app_config.offscreen){
       await page.goto(url);
     
       setInterval(async () => {
-        const screenshot = await page.screenshot({ encoding: 'base64' });
-        const dataUrl = `data:image/png;base64,${screenshot}`;
-    
-        if(m_redis_client){
-            m_redis_client.publish('pgis-offscreen', dataUrl, (err, reply) => {
+        if(m_app_config.offscreen_enabled){
+            const screenshot = await page.screenshot({ encoding: 'base64' });
+            const dataUrl = `data:image/png;base64,${screenshot}`;
+        
+            if(m_redis_client){
+                m_redis_client.publish('pgis-offscreen', `{"enabled":true,"url":"${dataUrl}"}`, (err, reply) => {
+                    if (err) {
+                        console.error('Error publishing message:', err);
+                    } else {
+                        //console.log(`Message published to ${reply} subscribers.`);
+                    }
+                });
+            }
+        }else{
+            client.publish('pgis-offscreen', '{"enabled":false}', (err, reply) => {
                 if (err) {
                     console.error('Error publishing message:', err);
                 } else {
