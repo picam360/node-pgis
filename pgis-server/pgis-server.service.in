@@ -5,8 +5,6 @@
 Description = pgis-server daemon
 
 [Service]
-# wait for EglDisplay ready
-ExecStartPre = /bin/sleep 10
 ExecStart = /usr/bin/pgis-server
 
 Environment="DISPLAY=:0"

@@ -4,6 +4,8 @@ const { spawn } = require('child_process');
 const redis = require('redis');
 const express = require('express');
 const cors = require('cors');
+//if chromium version is 112 then install puppeteer@20.0.0
+const puppeteer = require('puppeteer');
 
 function parseArgs() {
     const args = process.argv.slice(2);
@@ -23,12 +25,15 @@ let express_app = null;
 let http = null;
 let https = null;
 let m_redis_client = null;
+let m_offscreen_enabled_ts = 0;
 
 const m_args_options = parseArgs();
 
 const m_app_config = Object.assign({
-    offscreen : false,
     offscreen_enabled : false,//on/off
+    offscreen_headless : true,
+    offscreen_interval_ms : 1000,
+    offscreen_enabled_timeout_ms : 10000,
     debug : false,
 }, require('./config.js'));
 
@@ -107,6 +112,7 @@ function start_webserver() { // start up websocket server
                     switch (params[1]) {
                         case "ENABLE_OFFSCREEN":
                             m_app_config.offscreen_enabled = true;
+                            m_offscreen_enabled_ts = Date.now();
                             break;
                         case "DISABLE_OFFSCREEN":
                             m_app_config.offscreen_enabled = false;
@@ -122,63 +128,87 @@ function start_webserver() { // start up websocket server
 
 start_webserver();
 
-if(m_app_config.offscreen){
-    //if chromium version is 112 then install puppeteer@20.0.0
-    const puppeteer = require('puppeteer');
-    (async () => {
-      const browser = await puppeteer.launch({
-        headless: !(m_app_config.offscreen_headless === false),
-        args: [
-          '--disable-gpu',
-          '--disable-dev-shm-usage',
-          '--disable-setuid-sandbox',
-          '--no-first-run',
-          '--no-sandbox',
-          '--no-zygote',
-          '--single-process',
-        ],
-        executablePath: '/usr/bin/chromium-browser'
-      });
-    
-      const page = await browser.newPage();
-
-      page.setViewport({
-        width: 1280,
-        height: 640,
-      });
-    
-      const url = 'http://localhost:9101/index.html';
-      await page.goto(url);
-    
-      setInterval(async () => {
+//offscreen
+{
+    let m_browser = null;
+    let m_page = null;
+    let m_page_loading = false;
+    let m_page_closing = false;
+    setInterval(async () => {
+        if(!m_redis_client){
+            return;
+        }
         if(m_app_config.offscreen_enabled){
-            const screenshot = await page.screenshot({ encoding: 'base64' });
+            if(m_app_config.offscreen_enabled_timeout_ms > 0 && Date.now() - m_offscreen_enabled_ts > m_app_config.offscreen_enabled_timeout_ms){
+                m_app_config.offscreen_enabled = false;
+                return;
+            }
+            if(!m_page){
+                if(m_page_loading){
+                    console.log("puppeteer page loading...");
+                    return;
+                }
+                m_page_loading = true;
+                const browser = await puppeteer.launch({
+                    headless: !(m_app_config.offscreen_headless === false),
+                    args: [
+                        '--disable-gpu',
+                        '--disable-dev-shm-usage',
+                        '--disable-setuid-sandbox',
+                        '--no-first-run',
+                        '--no-sandbox',
+                        '--no-zygote',
+                        '--single-process',
+                    ],
+                    executablePath: '/usr/bin/chromium-browser'
+                });
+            
+                const page = await browser.newPage();
+            
+                page.setViewport({
+                    width: 1280,
+                    height: 640,
+                });
+            
+                const url = 'http://localhost:9101/index.html';
+                await page.goto(url);
+            
+                m_browser = browser;
+                m_page = page;
+                m_page_loading = false;
+    
+                console.log("puppeteer browser launched");
+            }
+            const screenshot = await m_page.screenshot({ encoding: 'base64' });
             const dataUrl = `data:image/png;base64,${screenshot}`;
         
-            if(m_redis_client){
-                m_redis_client.publish('pgis-offscreen', `{"enabled":true,"url":"${dataUrl}"}`, (err, reply) => {
-                    if (err) {
-                        console.error('Error publishing message:', err);
-                    } else {
-                        //console.log(`Message published to ${reply} subscribers.`);
-                    }
-                });
-            }
+            m_redis_client.publish('pgis-offscreen', `{"enabled":true,"url":"${dataUrl}"}`, (err, reply) => {
+                if (err) {
+                    console.error('Error publishing message:', err);
+                } else {
+                    //console.log(`Message published to ${reply} subscribers.`);
+                }
+            });
         }else{
-            if(m_redis_client){
-                m_redis_client.publish('pgis-offscreen', '{"enabled":false}', (err, reply) => {
-                    if (err) {
-                        console.error('Error publishing message:', err);
-                    } else {
-                        //console.log(`Message published to ${reply} subscribers.`);
-                    }
-                });
-            }
-        }
+            if(m_page){
+                const browser = m_browser;
+                const page = m_page;
 
-      }, m_app_config.offscreen_interval_ms || 1000);
+                m_browser = null;
+                m_page = null;
+
+                await page.close();
+                await browser.close();
     
-      // Puppeteerを終了
-      //await browser.close();
-    })();    
+                console.log("puppeteer browser closed");
+            }
+            m_redis_client.publish('pgis-offscreen', '{"enabled":false}', (err, reply) => {
+                if (err) {
+                    console.error('Error publishing message:', err);
+                } else {
+                    //console.log(`Message published to ${reply} subscribers.`);
+                }
+            });
+        }
+    }, m_app_config.offscreen_interval_ms || 1000);
 }
