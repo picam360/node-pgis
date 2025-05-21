@@ -23,5 +23,9 @@
   "scripts": {
     "install": "node setup.js",
     "start": "node app.js"
+  },
+  "volta": {
+   "node": "16.20.2",
+   "npm": "8.19.4"
   }
 }
